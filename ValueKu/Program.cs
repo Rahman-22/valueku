@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.FileProviders;
 using ValueKu.Common;
 using ValueKu.Core.Interfaces;
 using ValueKu.Infrastructure;
@@ -71,6 +72,17 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// Serve runtime-uploaded files (profile pictures). MapStaticAssets only serves assets known
+// at build time, so uploads under wwwroot/uploads need an explicit static-file handler.
+var uploadsRoot = Path.Combine(app.Environment.WebRootPath, "uploads");
+Directory.CreateDirectory(uploadsRoot);
+app.UseStaticFiles(new StaticFileOptions
+{
+    FileProvider = new PhysicalFileProvider(uploadsRoot),
+    RequestPath = "/uploads"
+});
+
 app.UseRouting();
 
 app.UseAuthentication();
