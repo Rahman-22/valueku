@@ -29,3 +29,7 @@ appsettings.*.local.json
 
 ## User uploads (profile pictures)
 **/wwwroot/uploads/
+
+## Deploy build output
+publish/
+app.zip
