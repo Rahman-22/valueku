@@ -1,0 +1,272 @@
+@model DashboardViewModel
+@{
+    ViewData["Title"] = "Dashboard";
+
+    var histLabels = Model.History.Select(p => p.Date.ToString("MMM yy")).ToList();
+    var projLabels = Model.Projection.Points.Skip(1).Select(p => p.Date.Year.ToString()).ToList();
+    var labels = histLabels.Concat(projLabels).ToList();
+
+    var historical = Model.History.Select(p => (decimal?)p.Value)
+        .Concat(projLabels.Select(_ => (decimal?)null)).ToList();
+
+    var projected = new List<decimal?>();
+    for (var i = 0; i < histLabels.Count; i++)
+        projected.Add(i == histLabels.Count - 1 && Model.History.Count > 0 ? Model.History[^1].Value : (decimal?)null);
+    projected.AddRange(Model.Projection.Points.Skip(1).Select(p => (decimal?)p.Value));
+
+    var allocationLabels = Model.Allocation.Select(a => a.Category).ToList();
+    var allocationValues = Model.Allocation.Select(a => a.Value).ToList();
+
+    var cashLabels = Model.CashFlow.Select(p => p.Month.ToString("MMM yy")).ToList();
+    var cashIncome = Model.CashFlow.Select(p => p.Income).ToList();
+    var cashExpense = Model.CashFlow.Select(p => p.Expense).ToList();
+
+    var spendLabels = Model.SpendingByCategory.Select(s => s.Category).ToList();
+    var spendValues = Model.SpendingByCategory.Select(s => s.Value).ToList();
+}
+
+<!-- Stat cards -->
+<div class="row g-3 mb-3">
+    <div class="col-sm-6 col-xl-3">
+        <div class="card stat-card">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stat-label">Net Worth</div>
+                    <div class="stat-value">@Model.Snapshot.NetWorth.ToMyr()</div>
+                    <div class="small @(Model.HistoryChange >= 0 ? "text-positive" : "text-negative")">
+                        <i class="bi @(Model.HistoryChange >= 0 ? "bi-arrow-up-right" : "bi-arrow-down-right")"></i>
+                        @Model.HistoryChange.ToMyr() <span class="text-muted">/ 12 mo</span>
+                    </div>
+                </div>
+                <div class="stat-icon"><i class="bi bi-piggy-bank"></i></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card stat-card">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stat-label">Total Assets</div>
+                    <div class="stat-value">@Model.Snapshot.TotalAssets.ToMyr()</div>
+                    <div class="small text-muted">Property, equity & cash</div>
+                </div>
+                <div class="stat-icon"><i class="bi bi-houses"></i></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card stat-card">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stat-label">Liabilities</div>
+                    <div class="stat-value">@Model.Snapshot.Liabilities.ToMyr()</div>
+                    <div class="small text-muted">Cards & loans</div>
+                </div>
+                <div class="stat-icon"><i class="bi bi-credit-card"></i></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card stat-card">
+            <div class="d-flex justify-content-between align-items-start">
+                <div>
+                    <div class="stat-label">Monthly Cash Flow</div>
+                    <div class="stat-value @(Model.MonthlyNetCashFlow >= 0 ? "text-positive" : "text-negative")">@Model.MonthlyNetCashFlow.ToMyr()</div>
+                    <div class="small text-muted">Avg · Savings rate @Model.SavingsRate.ToString("0.#")%</div>
+                </div>
+                <div class="stat-icon"><i class="bi bi-cash-stack"></i></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts -->
+<div class="row g-3 mb-3">
+    <div class="col-lg-8">
+        <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span>Net Worth — History &amp; 30-Year Projection</span>
+                <span class="badge badge-soft">5y @Model.Projection.At5Years.ToMyr() · 10y @Model.Projection.At10Years.ToMyr() · 30y @Model.Projection.At30Years.ToMyr()</span>
+            </div>
+            <div class="card-body">
+                <div id="trendChart"></div>
+            </div>
+        </div>
+    </div>
+    <div class="col-lg-4">
+        <div class="card h-100">
+            <div class="card-header">Asset Allocation</div>
+            <div class="card-body d-flex align-items-center justify-content-center">
+                @if (allocationValues.Count == 0)
+                {
+                    <p class="text-muted mb-0">No assets yet.</p>
+                }
+                else
+                {
+                    <div id="allocationChart" class="w-100"></div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Spending insights -->
+<div class="row g-3 mb-3">
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header">Income vs Expenses (6 months)</div>
+            <div class="card-body"><div id="cashflowChart"></div></div>
+        </div>
+    </div>
+    <div class="col-lg-6">
+        <div class="card h-100">
+            <div class="card-header">Spending by Category (this month)</div>
+            <div class="card-body d-flex align-items-center justify-content-center">
+                @if (spendValues.Count == 0)
+                {
+                    <p class="text-muted mb-0">No spending recorded this month.</p>
+                }
+                else
+                {
+                    <div id="spendChart" class="w-100"></div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@if (Model.Budgets.Count > 0)
+{
+    <div class="card mb-3">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span>Budgets — @DateTime.Today.ToString("MMMM")</span>
+            <a class="btn btn-sm btn-outline-primary" asp-controller="Budgets" asp-action="Index">Manage</a>
+        </div>
+        <div class="card-body">
+            @foreach (var b in Model.Budgets)
+            {
+                var bpct = Math.Min(100, b.Percent);
+                var barClass = b.IsOver ? "bg-danger" : (b.Percent >= 80 ? "bg-warning" : "bg-success");
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between small mb-1">
+                        <span class="fw-semibold">@b.Category.DisplayName()</span>
+                        <span class="@(b.IsOver ? "text-negative" : "text-muted")">@b.Spent.ToMyr() / @b.Limit.ToMyr()</span>
+                    </div>
+                    <div class="progress" style="height:8px">
+                        <div class="progress-bar @barClass" role="progressbar" style="width:@(bpct.ToString("0"))%"></div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+<!-- Recent transactions -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span>Recent Transactions</span>
+        <a class="btn btn-sm btn-outline-primary" asp-controller="Transactions" asp-action="Index">View all</a>
+    </div>
+    <div class="card-body p-0">
+        @if (Model.RecentTransactions.Count == 0)
+        {
+            <p class="text-muted p-3 mb-0">No transactions yet.</p>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table mb-0 align-middle">
+                    <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Description</th>
+                        <th>Account</th>
+                        <th>Category</th>
+                        <th class="text-end">Amount</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var t in Model.RecentTransactions)
+                    {
+                        <tr>
+                            <td>@t.TransactionDate.ToString("dd MMM yyyy")</td>
+                            <td>@(string.IsNullOrWhiteSpace(t.Description) ? "—" : t.Description)</td>
+                            <td>@(t.Account?.Name ?? "—")</td>
+                            <td><span class="badge badge-soft">@t.Category.DisplayName()</span></td>
+                            <td class="text-end @(t.Type == TransactionType.Income ? "text-positive" : "text-negative")">
+                                @(t.Type == TransactionType.Income ? "+" : "−")@t.Amount.ToMyr()
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        const fmtMyr = (val) => (val == null) ? '' : 'RM ' + Number(val).toLocaleString('en-MY', { maximumFractionDigits: 0 });
+
+        const trendOptions = {
+            chart: { type: 'area', height: 340, toolbar: { show: false }, fontFamily: 'inherit' },
+            series: [
+                { name: 'Historical', data: @Html.Raw(JsonSerializer.Serialize(historical)) },
+                { name: 'Projected', data: @Html.Raw(JsonSerializer.Serialize(projected)) }
+            ],
+            xaxis: { categories: @Html.Raw(JsonSerializer.Serialize(labels)), tickAmount: 12 },
+            yaxis: { labels: { formatter: fmtMyr } },
+            colors: ['#4f46e5', '#94a3b8'],
+            stroke: { curve: 'smooth', width: 3, dashArray: [0, 6] },
+            fill: { type: 'gradient', gradient: { opacityFrom: 0.35, opacityTo: 0.02 } },
+            dataLabels: { enabled: false },
+            legend: { position: 'top', horizontalAlign: 'right' },
+            tooltip: { y: { formatter: fmtMyr } }
+        };
+        new ApexCharts(document.querySelector('#trendChart'), trendOptions).render();
+
+        const allocationValues = @Html.Raw(JsonSerializer.Serialize(allocationValues));
+        if (allocationValues.length > 0) {
+            const allocationOptions = {
+                chart: { type: 'donut', height: 320, fontFamily: 'inherit' },
+                series: allocationValues,
+                labels: @Html.Raw(JsonSerializer.Serialize(allocationLabels)),
+                colors: ['#4f46e5', '#7c3aed', '#0ea5e9', '#10b981', '#f59e0b', '#ef4444'],
+                legend: { position: 'bottom' },
+                dataLabels: { enabled: true, formatter: (val) => Math.round(val) + '%' },
+                tooltip: { y: { formatter: fmtMyr } },
+                plotOptions: { pie: { donut: { labels: { show: true, total: { show: true, label: 'Total', formatter: (w) => fmtMyr(w.globals.seriesTotals.reduce((a, b) => a + b, 0)) } } } } }
+            };
+            new ApexCharts(document.querySelector('#allocationChart'), allocationOptions).render();
+        }
+
+        new ApexCharts(document.querySelector('#cashflowChart'), {
+            chart: { type: 'bar', height: 300, toolbar: { show: false }, fontFamily: 'inherit' },
+            series: [
+                { name: 'Income', data: @Html.Raw(JsonSerializer.Serialize(cashIncome)) },
+                { name: 'Expense', data: @Html.Raw(JsonSerializer.Serialize(cashExpense)) }
+            ],
+            xaxis: { categories: @Html.Raw(JsonSerializer.Serialize(cashLabels)) },
+            yaxis: { labels: { formatter: fmtMyr } },
+            colors: ['#10b981', '#ef4444'],
+            plotOptions: { bar: { columnWidth: '55%', borderRadius: 4 } },
+            dataLabels: { enabled: false },
+            legend: { position: 'top', horizontalAlign: 'right' },
+            tooltip: { y: { formatter: fmtMyr } }
+        }).render();
+
+        const spendValues = @Html.Raw(JsonSerializer.Serialize(spendValues));
+        if (spendValues.length > 0) {
+            new ApexCharts(document.querySelector('#spendChart'), {
+                chart: { type: 'donut', height: 300, fontFamily: 'inherit' },
+                series: spendValues,
+                labels: @Html.Raw(JsonSerializer.Serialize(spendLabels)),
+                colors: ['#ef4444', '#f59e0b', '#4f46e5', '#0ea5e9', '#10b981', '#7c3aed', '#64748b'],
+                legend: { position: 'bottom' },
+                dataLabels: { enabled: true, formatter: (val) => Math.round(val) + '%' },
+                tooltip: { y: { formatter: fmtMyr } }
+            }).render();
+        }
+    </script>
+}

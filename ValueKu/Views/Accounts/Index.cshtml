@@ -1,0 +1,62 @@
+@model IReadOnlyList<Account>
+@{
+    ViewData["Title"] = "Accounts";
+    var liquid = Model.Where(a => !a.IsLiability).Sum(a => a.Balance);
+    var liabilities = Model.Where(a => a.IsLiability).Sum(a => a.Balance);
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <p class="text-muted mb-0">
+        Liquid: <strong class="text-positive">@liquid.ToMyr()</strong> ·
+        Liabilities: <strong class="text-negative">@liabilities.ToMyr()</strong>
+    </p>
+    <a class="btn btn-primary" asp-action="Create"><i class="bi bi-plus-lg me-1"></i>Add Account</a>
+</div>
+
+<div class="card">
+    <div class="card-body p-0">
+        @if (Model.Count == 0)
+        {
+            <div class="text-center py-5">
+                <i class="bi bi-wallet2 display-6 text-muted d-block mb-2"></i>
+                <p class="text-muted mb-2">No accounts yet. Add a checking, savings, investment, e-wallet, credit card or loan account.</p>
+                <a class="btn btn-primary btn-sm" asp-action="Create">Add an account</a>
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table mb-0 align-middle">
+                    <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Type</th>
+                        <th class="text-end">Balance</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var a in Model)
+                    {
+                        <tr>
+                            <td class="fw-semibold">@a.Name</td>
+                            <td>
+                                @a.Type.DisplayName()
+                                @if (a.IsLiability)
+                                {
+                                    <span class="badge text-bg-danger ms-1">Liability</span>
+                                }
+                            </td>
+                            <td class="text-end fw-semibold @(a.IsLiability ? "text-negative" : "")">@a.Balance.ToMyr()</td>
+                            <td class="text-end">
+                                <a class="btn btn-sm btn-outline-secondary" asp-action="Edit" asp-route-id="@a.Id"><i class="bi bi-pencil"></i></a>
+                                <a class="btn btn-sm btn-outline-danger" asp-action="Delete" asp-route-id="@a.Id"><i class="bi bi-trash"></i></a>
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>

@@ -1,0 +1,107 @@
+# ValueKu — Personal Financial Tracker
+
+A comprehensive personal net-worth & wealth tracker built with **.NET 9 / ASP.NET Core MVC**, following a **Clean Architecture monolith** pattern. It tracks assets (with automatic depreciation/appreciation), accounts, and transactions; projects future net worth; and exports monthly PDF statements. Default currency is **MYR (Malaysian Ringgit)**.
+
+## Architecture
+
+A three-project Clean Architecture solution with dependencies pointing inward:
+
+```
+ValueKu.Web  ──►  ValueKu.Infrastructure  ──►  ValueKu.Core
+(MVC, Razor,       (EF Core 9, services,        (Entities, enums,
+ Bootstrap 5,       HybridCache, QuestPDF,       interfaces, hand-rolled
+ ApexCharts)        background worker, seed)     specifications, pure math)
+```
+
+- **ValueKu.Core** — domain entities, enums, result DTOs, repository/service interfaces, a hand-rolled Specification pattern (`ISpecification<T>` / `BaseSpecification<T>`), and the pure `AssetValuationCalculator` (no external dependencies).
+- **ValueKu.Infrastructure** — `ApplicationDbContext` + EF Core configurations & migrations, generic repository + unit of work, application services, the daily `AssetValuationWorker` (`BackgroundService`), `HybridCache` metrics caching, `QuestPDF` reporting, and the demo data seeder.
+- **ValueKu (Web)** — cookie authentication, controllers, view models, Bootstrap 5 layout, and ApexCharts dashboards. Acts as the composition root.
+
+## Tech stack
+
+| Concern | Choice |
+|---|---|
+| Runtime | .NET 9 |
+| Web | ASP.NET Core MVC, Razor views |
+| Data | EF Core 9 (Code-First) + Microsoft SQL Server 2022 |
+| Caching | .NET 9 `HybridCache` (in-memory, tag-based invalidation) |
+| Auth | Custom cookie auth over a domain `User` entity (`PasswordHasher<User>`) |
+| Background | `BackgroundService` + `PeriodicTimer` (daily revaluation) |
+| Reporting | QuestPDF (Community license) |
+| UI | Bootstrap 5.3, Bootstrap Icons, ApexCharts (CDN) |
+
+## Features
+
+1. **Dynamic asset & value management** — straight-line (linear) or compounding valuation; a daily background worker recomputes values and appends to `AssetValuationHistory`; net-worth/allocation metrics cached in `HybridCache`.
+2. **Predictive forecasting** — aggregates current assets + account balances and projects net worth over 5 / 10 / 30 years using each asset's rate plus the user's average monthly cash flow.
+3. **Automated reporting** — one-click PDF monthly statement: net-worth balance sheet, monthly cash-flow summary, and a 12-month net-worth trend table.
+4. **Budgeting** — monthly spending limits per category with progress bars, over-budget alerts, and a dashboard budget strip.
+5. **Savings goals** — targets with a date, progress tracking, suggested monthly contribution, and quick contributions.
+6. **Zakat calculator** — Malaysian/Islamic: sums zakat-eligible wealth (cash, ASB, unit trusts, equity, gold) against a configurable nisab (~RM29,961) and computes 2.5% payable; records payment as an expense.
+7. **Spending insights** — dashboard income-vs-expense trend, spending-by-category donut, and a savings-rate KPI.
+8. **Transaction management** — filter by account, date range, type, category and search, with pagination.
+9. **Settings** — change password; account overview.
+
+Malaysian touches: MYR formatting, EPF/ASB/Unit Trust/Tabung Haji asset categories, an e-Wallet account type, and zakat.
+
+## Prerequisites
+
+- [.NET 9 SDK](https://dotnet.microsoft.com/download)
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) (SQL Server runs under `linux/amd64` emulation on Apple Silicon)
+- `dotnet-ef` tools: `dotnet tool install --global dotnet-ef`
+
+## Getting started
+
+```bash
+# 1. Start SQL Server (waits ~30s to become healthy)
+docker compose up -d
+
+# 2. (Optional) apply the EF migration manually — the app also does this on startup
+dotnet ef database update -p ValueKu.Infrastructure -s ValueKu
+
+# 3. Run the app (applies migrations + seeds demo data on first run)
+dotnet run --project ValueKu
+```
+
+Then browse to the URL printed in the console (e.g. `https://localhost:xxxx`).
+
+### Default login
+
+The first run seeds a default user (configurable in `appsettings.json` under `SeedUser`) **and** a self-registration page is available.
+
+| Username | Password |
+|---|---|
+| `admin` | `Admin123!` |
+
+The seeder also creates a realistic demo portfolio (assets, accounts, ~12 months of transactions, and back-dated valuation history) so the dashboard, charts, and PDF are populated immediately.
+
+### Sign in with Google (optional)
+
+Users can also **Continue with Google** (the first Google sign-in auto-creates a passwordless local account; an existing account with the same email is linked). Password login and manual registration remain available. The Google button only appears once credentials are configured.
+
+To enable it:
+
+1. In the [Google Cloud Console](https://console.cloud.google.com/) → **APIs & Services → Credentials**, create an **OAuth client ID** of type **Web application**.
+2. Add an **Authorized redirect URI**: `https://localhost:<port>/signin-google` (use the HTTPS port shown when you run the app; add the `http://` variant too if you browse over HTTP).
+3. Store the credentials (the client secret is sensitive — prefer user-secrets):
+   ```bash
+   cd ValueKu
+   dotnet user-secrets init
+   dotnet user-secrets set "Authentication:Google:ClientId"     "<your-client-id>"
+   dotnet user-secrets set "Authentication:Google:ClientSecret" "<your-client-secret>"
+   ```
+   (Alternatively, fill the empty `Authentication:Google` keys in `appsettings.json` for local-only use.)
+
+## Configuration
+
+`ValueKu/appsettings.json`:
+
+- `ConnectionStrings:DefaultConnection` — SQL Server connection (defaults to the Docker container on `localhost,1433`).
+- `SeedUser` — credentials for the seeded user.
+- `ValuationWorker` — `IntervalHours` (default 24) and `RunOnStartup` (default true).
+
+> ⚠️ **Security note:** the SA password and seed credentials live in `docker-compose.yml` / `appsettings.json` for **local development only**. For anything beyond local, move them to user-secrets or environment variables.
+
+## Development environment
+
+Built and verified on macOS (Apple Silicon M4), JetBrains Rider, .NET 9 SDK, SQL Server 2022 in Docker.

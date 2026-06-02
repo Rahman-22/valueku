@@ -1,0 +1,75 @@
+@model IReadOnlyList<SavingsGoal>
+@{
+    ViewData["Title"] = "Savings Goals";
+    var today = DateOnly.FromDateTime(DateTime.Today);
+
+    decimal Suggested(SavingsGoal g)
+    {
+        var months = Math.Max(1, ((g.TargetDate.Year - today.Year) * 12) + g.TargetDate.Month - today.Month);
+        var remaining = Math.Max(0m, g.TargetAmount - g.CurrentAmount);
+        return decimal.Round(remaining / months, 2);
+    }
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <p class="text-muted mb-0">@Model.Count goal(s)</p>
+    <a class="btn btn-primary" asp-action="Create"><i class="bi bi-plus-lg me-1"></i>Add Goal</a>
+</div>
+
+@if (Model.Count == 0)
+{
+    <div class="card"><div class="card-body text-center py-5">
+        <i class="bi bi-flag display-5 text-muted d-block mb-2"></i>
+        <p class="text-muted">No savings goals yet. Set a target and a date, and we'll show how much to save each month.</p>
+        <a class="btn btn-primary" asp-action="Create">Create your first goal</a>
+    </div></div>
+}
+else
+{
+    <div class="row g-3">
+        @foreach (var g in Model)
+        {
+            var pct = g.Percent;
+            <div class="col-md-6 col-xl-4">
+                <div class="card h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h6 class="fw-bold mb-0">@g.Name</h6>
+                            @if (g.IsAchieved)
+                            {
+                                <span class="badge text-bg-success">Achieved 🎉</span>
+                            }
+                        </div>
+                        <div class="progress mb-2" style="height:10px">
+                            <div class="progress-bar bg-success" role="progressbar" style="width:@(pct.ToString("0"))%"></div>
+                        </div>
+                        <div class="d-flex justify-content-between small mb-2">
+                            <span class="fw-semibold">@g.CurrentAmount.ToMyr()</span>
+                            <span class="text-muted">of @g.TargetAmount.ToMyr()</span>
+                        </div>
+                        <div class="small text-muted mb-3">
+                            <i class="bi bi-calendar-event me-1"></i>Target @g.TargetDate.ToString("dd MMM yyyy")
+                            @if (!g.IsAchieved)
+                            {
+                                <span class="d-block mt-1"><i class="bi bi-piggy-bank me-1"></i>Save <strong>@Suggested(g).ToMyr()</strong>/month to reach it</span>
+                            }
+                        </div>
+
+                        <form asp-action="Contribute" asp-route-id="@g.Id" method="post" class="input-group input-group-sm mb-2">
+                            <span class="input-group-text">RM</span>
+                            <input type="number" name="amount" step="0.01" min="0.01" class="form-control" placeholder="Add contribution"/>
+                            <button type="submit" class="btn btn-outline-primary">Add</button>
+                        </form>
+
+                        <div class="d-flex gap-2">
+                            <a class="btn btn-sm btn-outline-secondary" asp-action="Edit" asp-route-id="@g.Id"><i class="bi bi-pencil"></i></a>
+                            <form asp-action="Delete" asp-route-id="@g.Id" method="post" onsubmit="return confirm('Delete this goal?');">
+                                <button type="submit" class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}

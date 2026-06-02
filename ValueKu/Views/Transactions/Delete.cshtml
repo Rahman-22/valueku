@@ -1,0 +1,24 @@
+@model Transaction
+@{
+    ViewData["Title"] = "Delete Transaction";
+}
+
+<div class="card">
+    <div class="card-body p-4">
+        <h5 class="mb-3">Delete this transaction?</h5>
+        <p class="text-muted">Deleting it will reverse its effect on the account balance.</p>
+        <dl class="row mb-4">
+            <dt class="col-sm-3">Date</dt><dd class="col-sm-9">@Model.TransactionDate.ToString("dd MMM yyyy")</dd>
+            <dt class="col-sm-3">Account</dt><dd class="col-sm-9">@(Model.Account?.Name ?? "—")</dd>
+            <dt class="col-sm-3">Category</dt><dd class="col-sm-9">@Model.Category.DisplayName()</dd>
+            <dt class="col-sm-3">Amount</dt>
+            <dd class="col-sm-9 @(Model.Type == TransactionType.Income ? "text-positive" : "text-negative")">
+                @(Model.Type == TransactionType.Income ? "+" : "−")@Model.Amount.ToMyr()
+            </dd>
+        </dl>
+        <form asp-action="Delete" asp-route-id="@Model.Id" method="post">
+            <button type="submit" class="btn btn-danger">Yes, delete</button>
+            <a class="btn btn-light" asp-action="Index">Cancel</a>
+        </form>
+    </div>
+</div>

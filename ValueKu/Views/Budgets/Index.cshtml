@@ -1,0 +1,54 @@
+@model IReadOnlyList<BudgetStatus>
+@{
+    ViewData["Title"] = "Budgets";
+    var totalLimit = Model.Sum(b => b.Limit);
+    var totalSpent = Model.Sum(b => b.Spent);
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <p class="text-muted mb-0">@DateTime.Today.ToString("MMMM yyyy") · Spent <strong>@totalSpent.ToMyr()</strong> of <strong>@totalLimit.ToMyr()</strong></p>
+    <a class="btn btn-primary" asp-action="Create"><i class="bi bi-plus-lg me-1"></i>Add Budget</a>
+</div>
+
+@if (Model.Count == 0)
+{
+    <div class="card"><div class="card-body text-center py-5">
+        <i class="bi bi-wallet2 display-5 text-muted d-block mb-2"></i>
+        <p class="text-muted">No budgets yet. Set a monthly limit per category to keep spending in check.</p>
+        <a class="btn btn-primary" asp-action="Create">Create your first budget</a>
+    </div></div>
+}
+else
+{
+    <div class="card"><div class="card-body">
+        @foreach (var b in Model)
+        {
+            var pct = Math.Min(100, b.Percent);
+            var barClass = b.IsOver ? "bg-danger" : (b.Percent >= 80 ? "bg-warning" : "bg-success");
+            <div class="mb-4">
+                <div class="d-flex justify-content-between mb-1">
+                    <span class="fw-semibold">@b.Category.DisplayName()</span>
+                    <span class="@(b.IsOver ? "text-negative" : "text-muted")">
+                        @b.Spent.ToMyr() / @b.Limit.ToMyr()
+                        @if (b.IsOver)
+                        {
+                            <span class="badge text-bg-danger ms-1">Over</span>
+                        }
+                    </span>
+                </div>
+                <div class="progress" style="height:10px">
+                    <div class="progress-bar @barClass" role="progressbar" style="width:@(pct.ToString("0"))%"></div>
+                </div>
+                <div class="d-flex justify-content-between mt-1">
+                    <small class="text-muted">@(b.Remaining >= 0 ? $"{b.Remaining.ToMyr()} left" : $"{(-b.Remaining).ToMyr()} over")</small>
+                    <span>
+                        <a class="btn btn-sm btn-link p-0 me-2 text-decoration-none" asp-action="Edit" asp-route-id="@b.BudgetId">Edit</a>
+                        <form asp-action="Delete" asp-route-id="@b.BudgetId" method="post" class="d-inline" onsubmit="return confirm('Delete this budget?');">
+                            <button type="submit" class="btn btn-sm btn-link text-danger p-0 text-decoration-none">Delete</button>
+                        </form>
+                    </span>
+                </div>
+            </div>
+        }
+    </div></div>
+}

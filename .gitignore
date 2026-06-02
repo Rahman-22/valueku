@@ -1,0 +1,31 @@
+## .NET build output
+bin/
+obj/
+[Dd]ebug/
+[Rr]elease/
+*.user
+*.suo
+
+## Rider / JetBrains
+.idea/
+*.sln.iml
+
+## VS / VS Code
+.vs/
+.vscode/
+
+## Test results & coverage
+[Tt]est[Rr]esult*/
+*.coverage
+*.trx
+
+## OS files
+.DS_Store
+Thumbs.db
+
+## App secrets / local config (keep templates, ignore real secrets)
+appsettings.*.local.json
+*.env
+
+## User uploads (profile pictures)
+**/wwwroot/uploads/

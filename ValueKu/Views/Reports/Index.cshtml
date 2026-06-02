@@ -1,0 +1,48 @@
+@model ReportRequestViewModel
+@{
+    ViewData["Title"] = "Reports";
+    var months = Enumerable.Range(1, 12)
+        .Select(m => new { Value = m, Name = new DateTime(2000, m, 1).ToString("MMMM") })
+        .ToList();
+    var years = Enumerable.Range(DateTime.Today.Year - 5, 6).Reverse().ToList();
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-7">
+        <div class="card">
+            <div class="card-header"><i class="bi bi-file-earmark-pdf me-1"></i> Monthly Financial Health Statement</div>
+            <div class="card-body p-4">
+                <p class="text-muted">
+                    Generate a PDF statement containing your net-worth balance sheet, the month's cash-flow
+                    summary, and a 12-month net-worth trend table.
+                </p>
+
+                <form asp-action="Download" method="get" target="_blank">
+                    <div class="row g-3">
+                        <div class="col-sm-6">
+                            <label for="month" class="form-label">Month</label>
+                            <select id="month" name="month" class="form-select">
+                                @foreach (var m in months)
+                                {
+                                    <option value="@m.Value" selected="@(m.Value == Model.Month)">@m.Name</option>
+                                }
+                            </select>
+                        </div>
+                        <div class="col-sm-6">
+                            <label for="year" class="form-label">Year</label>
+                            <select id="year" name="year" class="form-select">
+                                @foreach (var y in years)
+                                {
+                                    <option value="@y" selected="@(y == Model.Year)">@y</option>
+                                }
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <button type="submit" class="btn btn-primary"><i class="bi bi-download me-1"></i>Download PDF</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>

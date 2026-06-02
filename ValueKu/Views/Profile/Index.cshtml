@@ -1,0 +1,156 @@
+@model ProfilePageViewModel
+@{
+    ViewData["Title"] = "Profile";
+    var activeTab = (ViewBag.ActiveTab as string) ?? "profile";
+    string TabActive(string t) => activeTab == t ? "active" : "";
+    string PaneActive(string t) => activeTab == t ? "show active" : "";
+    var countryCodes = new[] { "+60", "+65", "+62", "+66", "+63", "+84", "+91", "+1", "+44", "+61" };
+}
+
+<p class="text-muted small mb-3"><span>User</span> <i class="bi bi-chevron-right mx-1"></i> <span>Profile</span></p>
+
+<ul class="nav nav-tabs mb-3">
+    <li class="nav-item">
+        <a class="nav-link @TabActive("profile")" data-bs-toggle="tab" href="#tab-profile">Profile</a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link @TabActive("password")" data-bs-toggle="tab" href="#tab-password">Password</a>
+    </li>
+</ul>
+
+<div class="tab-content">
+    <!-- Profile tab -->
+    <div class="tab-pane fade @PaneActive("profile")" id="tab-profile">
+        <div class="card">
+            <div class="card-header">Update User Profile</div>
+            <div class="card-body p-4">
+                <form asp-action="UpdateProfile" method="post" enctype="multipart/form-data">
+                    <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
+
+                    <div class="row mb-4">
+                        <label class="col-sm-3 col-form-label">Profile Picture</label>
+                        <div class="col-sm-9">
+                            <div style="position:relative;width:150px;">
+                                <img id="avatarPreview" src="@Model.AvatarUrl"
+                                     style="width:150px;height:150px;object-fit:cover;border-radius:.6rem;border:1px solid var(--vk-card-border);@(string.IsNullOrEmpty(Model.AvatarUrl) ? "display:none;" : "")"
+                                     alt="Profile picture"/>
+                                <div id="avatarPlaceholder"
+                                     style="width:150px;height:150px;border-radius:.6rem;border:1px dashed #cbd5e1;display:@(string.IsNullOrEmpty(Model.AvatarUrl) ? "flex" : "none");align-items:center;justify-content:center;background:#f8fafc;">
+                                    <i class="bi bi-person-circle" style="font-size:3rem;color:#cbd5e1;"></i>
+                                </div>
+
+                                <input asp-for="Profile.AvatarFile" id="avatarFile"
+                                       accept="image/png,image/jpeg,image/webp,image/gif" class="d-none"/>
+                                <label for="avatarFile" title="Change photo"
+                                       class="btn btn-sm btn-light border rounded-circle"
+                                       style="position:absolute;bottom:-10px;right:-10px;"><i class="bi bi-arrow-repeat"></i></label>
+                                @if (!string.IsNullOrEmpty(Model.AvatarUrl))
+                                {
+                                    <button type="submit" formaction="@Url.Action("RemoveAvatar")" formnovalidate
+                                            title="Remove photo" class="btn btn-sm btn-light border rounded-circle"
+                                            style="position:absolute;top:-10px;right:-10px;"><i class="bi bi-trash"></i></button>
+                                }
+                            </div>
+                            <span asp-validation-for="Profile.AvatarFile" class="text-danger small d-block mt-2"></span>
+                            <div class="form-text">PNG, JPG, WEBP or GIF, up to 2 MB.</div>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <label asp-for="Profile.FirstName" class="col-sm-3 col-form-label"></label>
+                        <div class="col-sm-9">
+                            <input asp-for="Profile.FirstName" class="form-control"/>
+                            <span asp-validation-for="Profile.FirstName" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <label asp-for="Profile.LastName" class="col-sm-3 col-form-label"></label>
+                        <div class="col-sm-9">
+                            <input asp-for="Profile.LastName" class="form-control"/>
+                            <span asp-validation-for="Profile.LastName" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <label asp-for="Profile.Email" class="col-sm-3 col-form-label"></label>
+                        <div class="col-sm-9">
+                            <input asp-for="Profile.Email" class="form-control"/>
+                            <span asp-validation-for="Profile.Email" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <div class="row mb-3">
+                        <label asp-for="Profile.PhoneNumber" class="col-sm-3 col-form-label"></label>
+                        <div class="col-sm-9">
+                            <div class="input-group">
+                                <select asp-for="Profile.PhoneCountryCode" class="form-select" style="max-width:110px;">
+                                    @foreach (var code in countryCodes)
+                                    {
+                                        <option value="@code" selected="@(Model.Profile.PhoneCountryCode == code ? "selected" : null)">@code</option>
+                                    }
+                                </select>
+                                <input asp-for="Profile.PhoneNumber" class="form-control" placeholder="123456789"/>
+                            </div>
+                            <span asp-validation-for="Profile.PhoneNumber" class="text-danger small"></span>
+                        </div>
+                    </div>
+
+                    <div class="text-end">
+                        <button type="submit" class="btn btn-primary px-4">Save</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Password tab -->
+    <div class="tab-pane fade @PaneActive("password")" id="tab-password">
+        <div class="card">
+            <div class="card-header">Change Password</div>
+            <div class="card-body p-4">
+                @if (!Model.HasPassword)
+                {
+                    <p class="text-muted mb-0"><i class="bi bi-google me-2"></i>This account signs in with Google, so there's no password to change here.</p>
+                }
+                else
+                {
+                    <form asp-action="ChangePassword" method="post" style="max-width:520px;">
+                        <div asp-validation-summary="ModelOnly" class="text-danger small mb-3"></div>
+                        <div class="mb-3">
+                            <label asp-for="Password.CurrentPassword" class="form-label"></label>
+                            <input asp-for="Password.CurrentPassword" class="form-control"/>
+                            <span asp-validation-for="Password.CurrentPassword" class="text-danger small"></span>
+                        </div>
+                        <div class="mb-3">
+                            <label asp-for="Password.NewPassword" class="form-label"></label>
+                            <input asp-for="Password.NewPassword" class="form-control"/>
+                            <span asp-validation-for="Password.NewPassword" class="text-danger small"></span>
+                        </div>
+                        <div class="mb-3">
+                            <label asp-for="Password.ConfirmPassword" class="form-label"></label>
+                            <input asp-for="Password.ConfirmPassword" class="form-control"/>
+                            <span asp-validation-for="Password.ConfirmPassword" class="text-danger small"></span>
+                        </div>
+                        <button type="submit" class="btn btn-primary">Update Password</button>
+                    </form>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial"/>
+    <script>
+        document.getElementById('avatarFile')?.addEventListener('change', function (e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const img = document.getElementById('avatarPreview');
+            const ph = document.getElementById('avatarPlaceholder');
+            img.src = URL.createObjectURL(file);
+            img.style.display = 'block';
+            if (ph) ph.style.display = 'none';
+        });
+    </script>
+}

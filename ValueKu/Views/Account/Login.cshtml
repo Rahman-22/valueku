@@ -1,0 +1,44 @@
+@model LoginViewModel
+@{
+    ViewData["Title"] = "Sign in";
+    Layout = "_AuthLayout";
+}
+
+<h4 class="fw-bold mb-1">Welcome back</h4>
+<p class="text-muted mb-4">Sign in to your ValueKu account.</p>
+
+<form asp-action="Login" method="post">
+    <input type="hidden" asp-for="ReturnUrl"/>
+    <div asp-validation-summary="ModelOnly" class="text-danger small mb-2"></div>
+
+    <div class="mb-3">
+        <label asp-for="UsernameOrEmail" class="form-label"></label>
+        <input asp-for="UsernameOrEmail" class="form-control" autofocus/>
+        <span asp-validation-for="UsernameOrEmail" class="text-danger small"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Password" class="form-label"></label>
+        <input asp-for="Password" class="form-control"/>
+        <span asp-validation-for="Password" class="text-danger small"></span>
+    </div>
+
+    <button type="submit" class="btn btn-primary w-100">Sign in</button>
+</form>
+
+@if (ViewBag.GoogleEnabled == true)
+{
+    <div class="d-flex align-items-center my-3 text-muted small">
+        <hr class="flex-grow-1"/><span class="px-2">or</span><hr class="flex-grow-1"/>
+    </div>
+    <a class="btn btn-outline-dark w-100" asp-action="ExternalLogin" asp-route-provider="Google" asp-route-returnUrl="@Model.ReturnUrl">
+        <i class="bi bi-google me-2"></i>Continue with Google
+    </a>
+}
+
+<hr class="my-4"/>
+<p class="text-center mb-0 small">Don't have an account? <a asp-action="Register">Create one</a></p>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial"/>
+}

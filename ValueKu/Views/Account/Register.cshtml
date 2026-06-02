@@ -1,0 +1,55 @@
+@model RegisterViewModel
+@{
+    ViewData["Title"] = "Create account";
+    Layout = "_AuthLayout";
+}
+
+<h4 class="fw-bold mb-1">Create your account</h4>
+<p class="text-muted mb-4">Start tracking your net worth in minutes.</p>
+
+<form asp-action="Register" method="post">
+    <div asp-validation-summary="ModelOnly" class="text-danger small mb-2"></div>
+
+    <div class="mb-3">
+        <label asp-for="Username" class="form-label"></label>
+        <input asp-for="Username" class="form-control" autofocus/>
+        <span asp-validation-for="Username" class="text-danger small"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Email" class="form-label"></label>
+        <input asp-for="Email" class="form-control"/>
+        <span asp-validation-for="Email" class="text-danger small"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Password" class="form-label"></label>
+        <input asp-for="Password" class="form-control"/>
+        <span asp-validation-for="Password" class="text-danger small"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="ConfirmPassword" class="form-label"></label>
+        <input asp-for="ConfirmPassword" class="form-control"/>
+        <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
+    </div>
+
+    <button type="submit" class="btn btn-primary w-100">Create account</button>
+</form>
+
+@if (ViewBag.GoogleEnabled == true)
+{
+    <div class="d-flex align-items-center my-3 text-muted small">
+        <hr class="flex-grow-1"/><span class="px-2">or</span><hr class="flex-grow-1"/>
+    </div>
+    <a class="btn btn-outline-dark w-100" asp-action="ExternalLogin" asp-route-provider="Google">
+        <i class="bi bi-google me-2"></i>Sign up with Google
+    </a>
+}
+
+<hr class="my-4"/>
+<p class="text-center mb-0 small">Already have an account? <a asp-action="Login">Sign in</a></p>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial"/>
+}

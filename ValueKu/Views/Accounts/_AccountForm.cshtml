@@ -1,0 +1,19 @@
+@model AccountFormViewModel
+<div class="row g-3">
+    <div class="col-md-6">
+        <label asp-for="Name" class="form-label"></label>
+        <input asp-for="Name" class="form-control" autofocus/>
+        <span asp-validation-for="Name" class="text-danger small"></span>
+    </div>
+    <div class="col-md-3">
+        <label asp-for="Type" class="form-label"></label>
+        <select asp-for="Type" asp-items="Html.GetEnumSelectList<AccountType>()" class="form-select"></select>
+        <span asp-validation-for="Type" class="text-danger small"></span>
+    </div>
+    <div class="col-md-3">
+        <label asp-for="Balance" class="form-label"></label>
+        <input asp-for="Balance" class="form-control" type="number" step="0.01"/>
+        <span asp-validation-for="Balance" class="text-danger small"></span>
+    </div>
+</div>
+<div class="form-text mt-2">Credit Card and Loan accounts count as liabilities (subtracted from net worth).</div>
