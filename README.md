@@ -2,21 +2,6 @@
 
 A comprehensive personal net-worth & wealth tracker built with **.NET 9 / ASP.NET Core MVC**, following a **Clean Architecture monolith** pattern. It tracks assets (with automatic depreciation/appreciation), accounts, and transactions; projects future net worth; and exports monthly PDF statements. Default currency is **MYR (Malaysian Ringgit)**.
 
-## Architecture
-
-A three-project Clean Architecture solution with dependencies pointing inward:
-
-```
-ValueKu.Web  ──►  ValueKu.Infrastructure  ──►  ValueKu.Core
-(MVC, Razor,       (EF Core 9, services,        (Entities, enums,
- Bootstrap 5,       HybridCache, QuestPDF,       interfaces, hand-rolled
- ApexCharts)        background worker, seed)     specifications, pure math)
-```
-
-- **ValueKu.Core** — domain entities, enums, result DTOs, repository/service interfaces, a hand-rolled Specification pattern (`ISpecification<T>` / `BaseSpecification<T>`), and the pure `AssetValuationCalculator` (no external dependencies).
-- **ValueKu.Infrastructure** — `ApplicationDbContext` + EF Core configurations & migrations, generic repository + unit of work, application services, the daily `AssetValuationWorker` (`BackgroundService`), `HybridCache` metrics caching, `QuestPDF` reporting, and the demo data seeder.
-- **ValueKu (Web)** — cookie authentication, controllers, view models, Bootstrap 5 layout, and ApexCharts dashboards. Acts as the composition root.
-
 ## Tech stack
 
 | Concern | Choice |
