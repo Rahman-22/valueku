@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 env:
-  AZURE_WEBAPP_NAME: valueku-yourname   # <-- change to your App Service name
+  AZURE_WEBAPP_NAME: valueku-rahman
   DOTNET_VERSION: '9.0.x'
 
 jobs:
