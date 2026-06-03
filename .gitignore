@@ -26,6 +26,13 @@ Thumbs.db
 ## App secrets / local config (keep templates, ignore real secrets)
 appsettings.*.local.json
 *.env
+.env
+!.env.example
+
+## Claude Code (keep local AI assistant files out of the repo)
+.claude/
+CLAUDE.md
+.mcp.json
 
 ## User uploads (profile pictures)
 **/wwwroot/uploads/

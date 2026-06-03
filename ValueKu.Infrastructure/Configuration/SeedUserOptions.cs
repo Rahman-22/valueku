@@ -7,5 +7,7 @@ public sealed class SeedUserOptions
 
     public string Username { get; set; } = "admin";
     public string Email { get; set; } = "admin@valueku.local";
-    public string Password { get; set; } = "Admin123!";
+
+    /// <summary>Fallback only — set the real value via user-secrets (local) or App Service settings (prod).</summary>
+    public string Password { get; set; } = "ChangeMe123!";
 }

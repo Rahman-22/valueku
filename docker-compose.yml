@@ -5,7 +5,7 @@ services:
     platform: linux/amd64                 # Rosetta emulation on Apple Silicon (M4)
     environment:
       - ACCEPT_EULA=Y
-      - MSSQL_SA_PASSWORD=YourStrongPassword123!
+      - MSSQL_SA_PASSWORD=${MSSQL_SA_PASSWORD:?set MSSQL_SA_PASSWORD in a .env file}
     ports:
       - "1433:1433"
     volumes:

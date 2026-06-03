@@ -52,26 +52,37 @@ Malaysian touches: MYR formatting, EPF/ASB/Unit Trust/Tabung Haji asset categori
 
 ## Getting started
 
+Secrets are **not** committed — provide them locally via `.env` (for Docker) and .NET user-secrets (for the app):
+
 ```bash
-# 1. Start SQL Server (waits ~30s to become healthy)
-docker compose up -d
+# 1. Database password for the local SQL container
+cp .env.example .env            # then edit MSSQL_SA_PASSWORD to a strong value
+docker compose up -d            # starts SQL Server (waits ~30s to become healthy)
 
-# 2. (Optional) apply the EF migration manually — the app also does this on startup
-dotnet ef database update -p ValueKu.Infrastructure -s ValueKu
+# 2. Tell the app how to reach the DB + which seed password to use (Development only)
+cd ValueKu
+dotnet user-secrets set "ConnectionStrings:DefaultConnection" \
+  "Server=localhost,1433;Database=ValueKu;User Id=sa;Password=<same-as-.env>;TrustServerCertificate=True;Encrypt=False;MultipleActiveResultSets=True"
+dotnet user-secrets set "SeedUser:Password" "Admin123!"
+cd ..
 
-# 3. Run the app (applies migrations + seeds demo data on first run)
+# 3. Run (applies migrations + seeds demo data on first run)
 dotnet run --project ValueKu
 ```
 
 Then browse to the URL printed in the console (e.g. `https://localhost:xxxx`).
 
+> In production the connection string and seed password come from **App Service application settings**, not from the repo.
+
 ### Default login
 
-The first run seeds a default user (configurable in `appsettings.json` under `SeedUser`) **and** a self-registration page is available.
+The first run seeds an `admin` user (username/email in `appsettings.json`; the **password** comes from `SeedUser:Password` in user-secrets / App Service settings) plus a self-registration page. The hosted demo uses:
 
 | Username | Password |
 |---|---|
 | `admin` | `Admin123!` |
+
+> This is a deliberately-public **demo** account on a throwaway environment — it guards nothing sensitive.
 
 The seeder also creates a realistic demo portfolio (assets, accounts, ~12 months of transactions, and back-dated valuation history) so the dashboard, charts, and PDF are populated immediately.
 
