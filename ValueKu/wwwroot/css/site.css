@@ -39,6 +39,15 @@ body { margin: 0; background: var(--vk-bg); color: #1f2937; }
   gap: .5rem;
 }
 .sidebar__brand .dot { color: #818cf8; }
+.sidebar__brand img {
+  display: block;
+  width: 100%;
+  max-width: 160px;
+  margin: 0 auto;
+  background: #fff;
+  border-radius: .75rem;
+  padding: .5rem .65rem;
+}
 
 .sidebar__nav { padding: .5rem .75rem; flex: 1; }
 .sidebar__nav a {

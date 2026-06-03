@@ -8,6 +8,8 @@
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>@ViewData["Title"] · ValueKu</title>
+    <link rel="icon" type="image/png" href="~/img/favicon-64.png" asp-append-version="true"/>
+    <link rel="apple-touch-icon" href="~/img/apple-touch-icon.png" asp-append-version="true"/>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css"/>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"/>
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true"/>
@@ -17,7 +19,7 @@
 <div class="app-shell">
     <aside class="sidebar" id="sidebar">
         <div class="sidebar__brand">
-            <i class="bi bi-graph-up-arrow"></i> Value<span class="dot">Ku</span>
+            <img src="~/img/logo.png" alt="ValueKu" asp-append-version="true"/>
         </div>
         <nav class="sidebar__nav">
             <a class="@Active("Dashboard")" asp-controller="Dashboard" asp-action="Index"><i class="bi bi-speedometer2"></i> Dashboard</a>
